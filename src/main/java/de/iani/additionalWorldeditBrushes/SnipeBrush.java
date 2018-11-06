@@ -10,10 +10,10 @@ import org.bukkit.entity.Player;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.command.tool.BrushTool;
 import com.sk89q.worldedit.command.tool.brush.Brush;
 import com.sk89q.worldedit.function.pattern.Pattern;
+import com.sk89q.worldedit.math.BlockVector3;
 
 public class SnipeBrush implements Brush {
 
@@ -28,7 +28,7 @@ public class SnipeBrush implements Brush {
     }
 
     @Override
-    public void build(EditSession editSession, Vector position, Pattern pattern, double size) throws MaxChangedBlocksException {
+    public void build(EditSession editSession, BlockVector3 position, Pattern pattern, double size) throws MaxChangedBlocksException {
         Player builder = plugin.getServer().getPlayer(playerId);
         if (builder == null) {
             return;
@@ -37,7 +37,7 @@ public class SnipeBrush implements Brush {
         if (blocks.size() > 1) {
             Block lastAir = blocks.get(blocks.size() - 2);
             if (lastAir.getType() == Material.AIR) {
-                Vector position2 = new Vector(lastAir.getX(), lastAir.getY(), lastAir.getZ());
+                BlockVector3 position2 = BlockVector3.at(lastAir.getX(), lastAir.getY(), lastAir.getZ());
                 editSession.setBlock(position2, pattern.apply(position2));
             }
         }

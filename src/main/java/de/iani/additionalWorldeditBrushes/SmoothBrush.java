@@ -6,9 +6,9 @@ import java.util.Map.Entry;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.command.tool.brush.Brush;
 import com.sk89q.worldedit.function.pattern.Pattern;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
@@ -25,15 +25,15 @@ public class SmoothBrush implements Brush {
     }
 
     @Override
-    public void build(EditSession editSession, Vector position, Pattern pattern, double size) throws MaxChangedBlocksException {
+    public void build(EditSession editSession, BlockVector3 position, Pattern pattern, double size) throws MaxChangedBlocksException {
         int sizeInt = (int) size;
 
-        int minx = (int) (position.getX()) - sizeInt;
-        int maxx = (int) (position.getX()) + sizeInt;
-        int miny = (int) (position.getY()) - sizeInt;
-        int maxy = (int) (position.getY()) + sizeInt;
-        int minz = (int) (position.getZ()) - sizeInt;
-        int maxz = (int) (position.getZ()) + sizeInt;
+        int minx = (position.getX()) - sizeInt;
+        int maxx = (position.getX()) + sizeInt;
+        int miny = (position.getY()) - sizeInt;
+        int maxy = (position.getY()) + sizeInt;
+        int minz = (position.getZ()) - sizeInt;
+        int maxz = (position.getZ()) + sizeInt;
 
         double sizesq = size * size;
 
@@ -41,7 +41,7 @@ public class SmoothBrush implements Brush {
         for (int x = minx; x <= maxx; x++) {
             for (int y = miny; y <= maxy; y++) {
                 for (int z = minz; z <= maxz; z++) {
-                    Vector pos = new Vector(x, y, z);
+                    BlockVector3 pos = BlockVector3.at(x, y, z);
                     blocks[x - minx][y - miny][z - minz] = editSession.getBlock(pos);
                 }
             }
@@ -54,17 +54,17 @@ public class SmoothBrush implements Brush {
             for (int y = miny + 1; y <= maxy - 1; y++) {
                 for (int z = minz + 1; z <= maxz - 1; z++) {
                     if (lengthSq(x - position.getX(), y - position.getY(), z - position.getZ()) < sizesq) {
-                        Vector pos = new Vector(x, y, z);
+                        BlockVector3 pos = BlockVector3.at(x, y, z);
                         BlockState blockHere = blocks[x - minx][y - miny][z - minz];
 
-                        Vector[] neighbours = new Vector[26];
+                        BlockVector3[] neighbours = new BlockVector3[26];
                         int nr = 0;
                         for (int x1 = x - 1; x1 <= x + 1; x1++) {
                             for (int y1 = y - 1; y1 <= y + 1; y1++) {
                                 for (int z1 = z - 1; z1 <= z + 1; z1++) {
                                     if (x1 != x || y1 != y || z1 != z) {
                                         if (x1 == x || y1 == y || z1 == z) {
-                                            neighbours[nr++] = new Vector(x1, y1, z1);
+                                            neighbours[nr++] = BlockVector3.at(x1, y1, z1);
                                         }
                                     }
                                 }
@@ -79,7 +79,7 @@ public class SmoothBrush implements Brush {
 
                         int airCount = 0;
 
-                        for (Vector pos2 : neighbours) {
+                        for (BlockVector3 pos2 : neighbours) {
                             if (pos2 != null) {
                                 BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
                                 if (blockThere.getBlockType() == BlockTypes.AIR) {
@@ -91,7 +91,7 @@ public class SmoothBrush implements Brush {
                         if (blockHere.getBlockType() == BlockTypes.AIR && airCount < 8 + bias) {
                             blocksNeighbour.clear();
                             blocksNeighbourData.clear();
-                            for (Vector pos2 : neighbours) {
+                            for (BlockVector3 pos2 : neighbours) {
                                 if (pos2 != null) {
                                     BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
                                     BlockType t = blockThere.getBlockType();

@@ -8,9 +8,9 @@ import org.bukkit.entity.Player;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.command.tool.brush.Brush;
 import com.sk89q.worldedit.function.pattern.Pattern;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockTypes;
 
@@ -25,7 +25,7 @@ public class PushBrush implements Brush {
     }
 
     @Override
-    public void build(EditSession editSession, Vector position, Pattern pattern, double size) throws MaxChangedBlocksException {
+    public void build(EditSession editSession, BlockVector3 position, Pattern pattern, double size) throws MaxChangedBlocksException {
         int minx = (int) (position.getX() - size);
         int maxx = (int) (position.getX() + size);
         int miny = (int) (position.getY() - size);
@@ -77,11 +77,11 @@ public class PushBrush implements Brush {
             for (int y = miny; y <= maxy; y++) {
                 for (int z = minz; z <= maxz; z++) {
                     if (lengthSq(x - position.getX(), y - position.getY(), z - position.getZ()) < sizesq) {
-                        Vector pos = new Vector(x, y, z);
+                        BlockVector3 pos = BlockVector3.at(x, y, z);
                         BlockState blockHere = editSession.getBlock(pos);
                         // builder.sendMessage("A: " + pos + ": " + blockHere);
                         if (blockHere.getBlockType() != BlockTypes.AIR) {
-                            Vector pos2 = pos.add(mx, my, mz);
+                            BlockVector3 pos2 = pos.add(mx, my, mz);
                             BlockState blockThere = editSession.getBlock(pos2);
                             // builder.sendMessage("B: " + pos + " -- " + pos2 + ": " + blockThere);
                             if (blockThere.getBlockType() == BlockTypes.AIR) {
