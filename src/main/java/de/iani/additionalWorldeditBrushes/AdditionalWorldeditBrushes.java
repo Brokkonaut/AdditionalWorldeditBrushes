@@ -1,14 +1,5 @@
 package de.iani.additionalWorldeditBrushes;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import com.sk89q.worldedit.bukkit.BukkitPlayer;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.command.tool.BrushTool;
@@ -18,6 +9,15 @@ import com.sk89q.worldedit.extension.input.ParserContext;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.world.item.ItemTypes;
+import java.util.ArrayList;
+import java.util.List;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class AdditionalWorldeditBrushes extends JavaPlugin {
     private WorldEditPlugin we;
@@ -27,6 +27,9 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
     public void onEnable() {
         we = (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
         getCommand("abrush").setTabCompleter(this);
+        CommandExecutor command = new ReplaceBiomeCommand(this);
+        getCommand("replacebiome").setExecutor(command);
+        getCommand("replacebiome").setTabCompleter((TabCompleter) command);
     }
 
     @Override

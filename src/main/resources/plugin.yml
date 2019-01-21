@@ -11,3 +11,5 @@ description: AdditionalWorldeditBrushes
 commands:
   abrush:
     description: Select Brush
+  replacebiome:
+    description: Replace biomes in a radius
