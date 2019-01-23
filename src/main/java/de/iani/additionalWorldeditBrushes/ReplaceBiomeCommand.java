@@ -60,7 +60,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.DARK_RED + "Only for players!");
             return true;
         }
-        if (!sender.hasPermission("worldedit.biome.set")) {
+        if (!sender.hasPermission("additionalWorldEditBrushes.replacebiome")) {
             sender.sendMessage(ChatColor.DARK_RED + "No permission!");
             return true;
         }
