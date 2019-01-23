@@ -67,7 +67,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
 
         if (args.length < 2) {
-            sender.sendMessage("/replacebiome <newbiome> <radius>");
+            sender.sendMessage("/replacebiome <newbiome> <radius> [oldbiome]");
             return true;
         }
         String biomeName = args[0].toUpperCase();
@@ -86,6 +86,14 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         int expandedRadius = (int) ((radius + 1) * 1.3);
+        BaseBiome oldBiome = null;
+        if (args.length >= 3) {
+            oldBiome = nameToBiome.get(args[2]);
+            if (oldBiome == null) {
+                sender.sendMessage(ChatColor.DARK_RED + "Unknown old Biome!");
+                return true;
+            }
+        }
 
         BukkitPlayer wePlayer = plugin.getWorldEdit().wrapPlayer(player);
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(wePlayer);
@@ -100,8 +108,15 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         // replace = new FlatRegionMaskingFilter(mask2d, replace);
         // }
         BlockVector2 center = wePlayer.getLocation().toVector().toBlockPoint().toBlockVector2();
+        if (oldBiome == null) {
+            oldBiome = editSession.getBiome(center);
+        }
+        if (oldBiome.equals(biome)) {
+            sender.sendMessage(ChatColor.DARK_RED + "Old biome and new biome are the same!");
+            return true;
+        }
 
-        replace = new FlatRegionMaskingFilter(new RadiusMask2D(player, editSession, center, radius, editSession.getBiome(center)), replace);
+        replace = new FlatRegionMaskingFilter(new RadiusMask2D(player, editSession, center, radius, oldBiome), replace);
         FlatRegionVisitor visitor = new FlatRegionVisitor(Regions.asFlatRegion(region), replace);
         try {
             Operations.completeLegacy(visitor);
@@ -118,7 +133,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         ArrayList<String> result = new ArrayList<>();
         String last = args.length == 0 ? "" : args[args.length - 1];
-        if (args.length == 1) {
+        if (args.length == 1 || args.length == 3) {
             for (String s : nameToBiome.keySet()) {
                 if (s.toLowerCase().startsWith(last.toLowerCase())) {
                     result.add(s);
