@@ -4,8 +4,8 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.BukkitPlayer;
-import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldedit.extent.Extent;
 import com.sk89q.worldedit.function.FlatRegionFunction;
 import com.sk89q.worldedit.function.FlatRegionMaskingFilter;
@@ -17,16 +17,14 @@ import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.Regions;
-import com.sk89q.worldedit.world.biome.BaseBiome;
-import com.sk89q.worldedit.world.biome.BiomeData;
-import com.sk89q.worldedit.world.registry.BiomeRegistry;
+import com.sk89q.worldedit.world.biome.BiomeType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -36,22 +34,9 @@ import org.bukkit.entity.Player;
 public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
 
     private AdditionalWorldeditBrushes plugin;
-    private HashMap<BaseBiome, String> biomeToName = new HashMap<>();
-    private HashMap<String, BaseBiome> nameToBiome = new HashMap<>();
 
     public ReplaceBiomeCommand(AdditionalWorldeditBrushes plugin) {
         this.plugin = plugin;
-
-        BiomeRegistry biomeRegistry = WorldEdit.getInstance().getPlatformManager().queryCapability(Capability.GAME_HOOKS).getRegistries().getBiomeRegistry();
-        List<BaseBiome> biomes = biomeRegistry.getBiomes();
-        for (BaseBiome biome : biomes) {
-            BiomeData data = biomeRegistry.getData(biome);
-            if (data != null) {
-                String biomeName = data.getName();
-                biomeToName.put(biome, biomeName);
-                nameToBiome.put(biomeName, biome);
-            }
-        }
     }
 
     @Override
@@ -70,8 +55,13 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("/replacebiome <newbiome> <radius> [oldbiome]");
             return true;
         }
-        String biomeName = args[0].toUpperCase();
-        BaseBiome biome = nameToBiome.get(biomeName);
+        BiomeType biome = null;
+        try {
+            Biome bukkitBiome = Biome.valueOf(args[0].toUpperCase());
+            biome = BukkitAdapter.adapt(bukkitBiome);
+        } catch (IllegalArgumentException e) {
+            // ignore
+        }
         if (biome == null) {
             sender.sendMessage(ChatColor.DARK_RED + "Unknown Biome!");
             return true;
@@ -86,9 +76,14 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         int expandedRadius = (int) ((radius + 1) * 1.3);
-        BaseBiome oldBiome = null;
+        BiomeType oldBiome = null;
         if (args.length >= 3) {
-            oldBiome = nameToBiome.get(args[2]);
+            try {
+                Biome bukkitBiome = Biome.valueOf(args[2].toUpperCase());
+                oldBiome = BukkitAdapter.adapt(bukkitBiome);
+            } catch (IllegalArgumentException e) {
+                // ignore
+            }
             if (oldBiome == null) {
                 sender.sendMessage(ChatColor.DARK_RED + "Unknown old Biome!");
                 return true;
@@ -134,9 +129,9 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         ArrayList<String> result = new ArrayList<>();
         String last = args.length == 0 ? "" : args[args.length - 1];
         if (args.length == 1 || args.length == 3) {
-            for (String s : nameToBiome.keySet()) {
-                if (s.toLowerCase().startsWith(last.toLowerCase())) {
-                    result.add(s);
+            for (Biome s : Biome.values()) {
+                if (s.name().toLowerCase().startsWith(last.toLowerCase())) {
+                    result.add(s.name());
                 }
             }
         }
@@ -148,12 +143,12 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         private Extent extent;
         private BlockVector2 center;
         private int radius;
-        private BaseBiome expectedBiome;
+        private BiomeType expectedBiome;
         private double add1;
         private double add2;
         private double add3;
 
-        public RadiusMask2D(Player player, Extent extent, BlockVector2 center, int radius, BaseBiome expectedBiome) {
+        public RadiusMask2D(Player player, Extent extent, BlockVector2 center, int radius, BiomeType expectedBiome) {
             this.player = player;
             this.extent = extent;
             this.center = center;
@@ -167,7 +162,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
 
         @Override
         public boolean test(BlockVector2 vector) {
-            BaseBiome oldBiome = extent.getBiome(vector);
+            BiomeType oldBiome = extent.getBiome(vector);
             if (!oldBiome.equals(expectedBiome)) {
                 return false;
             }
