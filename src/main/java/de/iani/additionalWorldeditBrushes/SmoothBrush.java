@@ -1,9 +1,5 @@
 package de.iani.additionalWorldeditBrushes;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
-
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.command.tool.brush.Brush;
@@ -12,6 +8,9 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 public class SmoothBrush implements Brush {
 
@@ -22,6 +21,14 @@ public class SmoothBrush implements Brush {
     public SmoothBrush(AdditionalWorldeditBrushes plugin, int bias) {
         // this.plugin = plugin;
         this.bias = bias;
+    }
+
+    public boolean isAirlike(BlockType m) {
+        return m == BlockTypes.AIR || m == BlockTypes.CAVE_AIR || m == BlockTypes.WATER || m == BlockTypes.LAVA || m == BlockTypes.GRASS || !m.getMaterial().isMovementBlocker();
+    }
+
+    public boolean isVeryAirlike(BlockType m) {
+        return m == BlockTypes.AIR || m == BlockTypes.CAVE_AIR || m == BlockTypes.WATER || m == BlockTypes.LAVA;
     }
 
     @Override
@@ -82,20 +89,20 @@ public class SmoothBrush implements Brush {
                         for (BlockVector3 pos2 : neighbours) {
                             if (pos2 != null) {
                                 BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
-                                if (blockThere.getBlockType() == BlockTypes.AIR) {
+                                if (isAirlike(blockThere.getBlockType())) {
                                     airCount++;
                                 }
                             }
                         }
 
-                        if (blockHere.getBlockType() == BlockTypes.AIR && airCount < 8 + bias) {
+                        if (isAirlike(blockHere.getBlockType()) && airCount < 8 + bias) {
                             blocksNeighbour.clear();
                             blocksNeighbourData.clear();
                             for (BlockVector3 pos2 : neighbours) {
                                 if (pos2 != null) {
                                     BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
                                     BlockType t = blockThere.getBlockType();
-                                    if (t != BlockTypes.AIR) {
+                                    if (!isAirlike(t)) {
                                         Integer existing = blocksNeighbour.get(t);
                                         blocksNeighbour.put(t, existing == null ? 1 : existing + 1);
                                         blocksNeighbourData.put(t, blockThere.toImmutableState());
@@ -111,14 +118,29 @@ public class SmoothBrush implements Brush {
                                 }
                             }
                             blocksToSet.add(new PostionedBlock(pos, maxd.toBaseBlock()));
-                        } else if (blockHere.getBlockType() != BlockTypes.AIR && airCount > 10 + bias) {
-                            blocksToSet.add(new PostionedBlock(pos, BlockTypes.AIR.getDefaultState().toBaseBlock()));
-                            // Vector pos2 = pos.subtract(mx, my, mz);
-                            // BaseBlock blockThere = editSession.getBlock(pos2);
-                            // if (blockThere.getType() != BlockID.AIR) {
-                            // blocksToSet.add(new PostionedBlock(pos, blockThere));
-                            // // builder.sendMessage(pos + ": " + blockThere);
-                            // }
+                        } else if (!isAirlike(blockHere.getBlockType()) && airCount > 10 + bias) {
+                            blocksNeighbour.clear();
+                            blocksNeighbourData.clear();
+                            for (BlockVector3 pos2 : neighbours) {
+                                if (pos2 != null) {
+                                    BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
+                                    BlockType t = blockThere.getBlockType();
+                                    if (isVeryAirlike(t)) {
+                                        Integer existing = blocksNeighbour.get(t);
+                                        blocksNeighbour.put(t, existing == null ? 1 : existing + 1);
+                                        blocksNeighbourData.put(t, blockThere.toImmutableState());
+                                    }
+                                }
+                            }
+                            int max = 0;
+                            BlockState maxd = null;
+                            for (Entry<BlockType, Integer> e : blocksNeighbour.entrySet()) {
+                                if (e.getValue() > max) {
+                                    max = e.getValue();
+                                    maxd = blocksNeighbourData.get(e.getKey());
+                                }
+                            }
+                            blocksToSet.add(new PostionedBlock(pos, maxd == null ? BlockTypes.AIR.getDefaultState().toBaseBlock() : maxd.toBaseBlock()));
                         }
                     }
                 }
