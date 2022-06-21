@@ -7,13 +7,14 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.BukkitPlayer;
 import com.sk89q.worldedit.extent.Extent;
-import com.sk89q.worldedit.function.FlatRegionFunction;
-import com.sk89q.worldedit.function.FlatRegionMaskingFilter;
+import com.sk89q.worldedit.function.RegionFunction;
+import com.sk89q.worldedit.function.RegionMaskingFilter;
 import com.sk89q.worldedit.function.biome.BiomeReplace;
-import com.sk89q.worldedit.function.mask.Mask2D;
+import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.operation.Operations;
-import com.sk89q.worldedit.function.visitor.FlatRegionVisitor;
+import com.sk89q.worldedit.function.visitor.RegionVisitor;
 import com.sk89q.worldedit.math.BlockVector2;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.Regions;
@@ -58,7 +59,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         BiomeType biome = null;
         try {
             Biome bukkitBiome = Biome.valueOf(args[0].toUpperCase());
-            biome = BukkitAdapter.adapt(bukkitBiome);
+            biome = bukkitBiome == Biome.CUSTOM ? null : BukkitAdapter.adapt(bukkitBiome);
         } catch (IllegalArgumentException e) {
             // ignore
         }
@@ -80,7 +81,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         if (args.length >= 3) {
             try {
                 Biome bukkitBiome = Biome.valueOf(args[2].toUpperCase());
-                oldBiome = BukkitAdapter.adapt(bukkitBiome);
+                oldBiome = bukkitBiome == Biome.CUSTOM ? null : BukkitAdapter.adapt(bukkitBiome);
             } catch (IllegalArgumentException e) {
                 // ignore
             }
@@ -94,8 +95,9 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(wePlayer);
         EditSession editSession = session.createEditSession(wePlayer);
 
-        Region region = new CuboidRegion(wePlayer.getLocation().toVector().toBlockPoint().subtract(expandedRadius, 0, expandedRadius), wePlayer.getLocation().toVector().toBlockPoint().add(expandedRadius, 0, expandedRadius));
-        FlatRegionFunction replace = new BiomeReplace(editSession, biome);
+        Region region = new CuboidRegion(wePlayer.getLocation().toVector().toBlockPoint().subtract(expandedRadius, 0, expandedRadius).withY(player.getWorld().getMinHeight()),
+                wePlayer.getLocation().toVector().toBlockPoint().add(expandedRadius, 0, expandedRadius).withY(player.getWorld().getMaxHeight() - 1));
+        RegionFunction replace = new BiomeReplace(editSession, biome);
 
         // Mask mask = editSession.getMask();
         // Mask2D mask2d = mask != null ? mask.toMask2D() : null;
@@ -104,15 +106,15 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         // }
         BlockVector2 center = wePlayer.getLocation().toVector().toBlockPoint().toBlockVector2();
         if (oldBiome == null) {
-            oldBiome = editSession.getBiome(center);
+            oldBiome = editSession.getBiome(center.toBlockVector3(64));
         }
         if (oldBiome.equals(biome)) {
             sender.sendMessage(ChatColor.DARK_RED + "Old biome and new biome are the same!");
             return true;
         }
 
-        replace = new FlatRegionMaskingFilter(new RadiusMask2D(player, editSession, center, radius, oldBiome), replace);
-        FlatRegionVisitor visitor = new FlatRegionVisitor(Regions.asFlatRegion(region), replace);
+        replace = new RegionMaskingFilter(new RadiusMask2D(player, editSession, center, radius, oldBiome), replace);
+        RegionVisitor visitor = new RegionVisitor(Regions.asFlatRegion(region), replace);
         try {
             Operations.completeLegacy(visitor);
         } catch (MaxChangedBlocksException e) {
@@ -130,15 +132,17 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         String last = args.length == 0 ? "" : args[args.length - 1];
         if (args.length == 1 || args.length == 3) {
             for (Biome s : Biome.values()) {
-                if (s.name().toLowerCase().startsWith(last.toLowerCase())) {
-                    result.add(s.name());
+                if (s != Biome.CUSTOM) {
+                    if (s.name().toLowerCase().startsWith(last.toLowerCase())) {
+                        result.add(s.name());
+                    }
                 }
             }
         }
         return result;
     }
 
-    private class RadiusMask2D implements Mask2D {
+    private class RadiusMask2D implements Mask {
         private Player player;
         private Extent extent;
         private BlockVector2 center;
@@ -161,12 +165,12 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         }
 
         @Override
-        public boolean test(BlockVector2 vector) {
+        public boolean test(BlockVector3 vector) {
             BiomeType oldBiome = extent.getBiome(vector);
             if (!oldBiome.equals(expectedBiome)) {
                 return false;
             }
-            BlockVector2 relative = vector.subtract(center);
+            BlockVector2 relative = vector.toBlockVector2().subtract(center);
             double d = relative.length();
             double atan = Math.atan2(relative.getZ(), relative.getX());// -pi ... pi
             double maxd = 1;
