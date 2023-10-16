@@ -4,7 +4,7 @@ main: de.iani.additionalWorldeditBrushes.AdditionalWorldeditBrushes
 
 version: 0.1.2
 api-version: 1.13
-depend: [WorldEdit]
+depend: [WorldEdit, CubesideUtils]
 author: Brokkonaut
 description: AdditionalWorldeditBrushes
 

@@ -17,14 +17,11 @@ import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldedit.regions.Regions;
 import com.sk89q.worldedit.world.biome.BiomeType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -93,37 +90,37 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
 
         BukkitPlayer wePlayer = plugin.getWorldEdit().wrapPlayer(player);
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(wePlayer);
-        EditSession editSession = session.createEditSession(wePlayer);
+        try (EditSession editSession = session.createEditSession(wePlayer)) {
+            Region region = new CuboidRegion(wePlayer.getLocation().toVector().toBlockPoint().subtract(expandedRadius, expandedRadius, expandedRadius).withY(player.getWorld().getMinHeight()),
+                    wePlayer.getLocation().toVector().toBlockPoint().add(expandedRadius, expandedRadius, expandedRadius).withY(player.getWorld().getMaxHeight()));
+            RegionFunction replace = new BiomeReplace(editSession, biome);
 
-        Region region = new CuboidRegion(wePlayer.getLocation().toVector().toBlockPoint().subtract(expandedRadius, 0, expandedRadius).withY(player.getWorld().getMinHeight()),
-                wePlayer.getLocation().toVector().toBlockPoint().add(expandedRadius, 0, expandedRadius).withY(player.getWorld().getMaxHeight() - 1));
-        RegionFunction replace = new BiomeReplace(editSession, biome);
+            // Mask mask = editSession.getMask();
+            // Mask2D mask2d = mask != null ? mask.toMask2D() : null;
+            // if (mask2d != null) {
+            // replace = new FlatRegionMaskingFilter(mask2d, replace);
+            // }
+            BlockVector3 center = wePlayer.getLocation().toVector().toBlockPoint();
+            if (oldBiome == null) {
+                oldBiome = editSession.getBiome(center);
+            }
+            if (oldBiome.equals(biome)) {
+                sender.sendMessage(ChatColor.DARK_RED + "Old biome and new biome are the same!");
+                return true;
+            }
 
-        // Mask mask = editSession.getMask();
-        // Mask2D mask2d = mask != null ? mask.toMask2D() : null;
-        // if (mask2d != null) {
-        // replace = new FlatRegionMaskingFilter(mask2d, replace);
-        // }
-        BlockVector2 center = wePlayer.getLocation().toVector().toBlockPoint().toBlockVector2();
-        if (oldBiome == null) {
-            oldBiome = editSession.getBiome(center.toBlockVector3(64));
+            replace = new RegionMaskingFilter(new RadiusMask(player, editSession, center, radius, oldBiome), replace);
+            RegionVisitor visitor = new RegionVisitor(region, replace);
+            try {
+                Operations.completeLegacy(visitor);
+            } catch (MaxChangedBlocksException e) {
+                wePlayer.print("Max blocks limit reached!");
+            } finally {
+                session.remember(editSession);
+            }
+            wePlayer.print("Biomes were changed in " + visitor.getAffected() + " columns. You may have to rejoin your game (or close and reopen your world) to see a change.");
         }
-        if (oldBiome.equals(biome)) {
-            sender.sendMessage(ChatColor.DARK_RED + "Old biome and new biome are the same!");
-            return true;
-        }
-
-        replace = new RegionMaskingFilter(new RadiusMask2D(player, editSession, center, radius, oldBiome), replace);
-        RegionVisitor visitor = new RegionVisitor(Regions.asFlatRegion(region), replace);
-        try {
-            Operations.completeLegacy(visitor);
-        } catch (MaxChangedBlocksException e) {
-            wePlayer.print("Max blocks limit reached!");
-        }
-
-        wePlayer.print("Biomes were changed in " + visitor.getAffected() + " columns. You may have to rejoin your game (or close and reopen your world) to see a change.");
-
-        return false;
+        return true;
     }
 
     @Override
@@ -142,7 +139,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         return result;
     }
 
-    private class RadiusMask2D implements Mask {
+    private class RadiusMask implements Mask {
         private Player player;
         private Extent extent;
         private BlockVector2 center;
@@ -152,10 +149,10 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         private double add2;
         private double add3;
 
-        public RadiusMask2D(Player player, Extent extent, BlockVector2 center, int radius, BiomeType expectedBiome) {
+        public RadiusMask(Player player, Extent extent, BlockVector3 center, int radius, BiomeType expectedBiome) {
             this.player = player;
             this.extent = extent;
-            this.center = center;
+            this.center = center.toBlockVector2();
             this.radius = radius;
             this.expectedBiome = expectedBiome;
             Random random = new Random();
@@ -181,8 +178,8 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
                 return false;
             }
 
-            Location loc = new Location(player.getWorld(), vector.getBlockX(), player.getWorld().getHighestBlockAt(vector.getBlockX(), vector.getBlockZ()).getY() + 2, vector.getBlockZ());
-            player.sendBlockChange(loc, Material.RED_STAINED_GLASS.createBlockData());
+            // Location loc = new Location(player.getWorld(), vector.getBlockX(), player.getWorld().getHighestBlockAt(vector.getBlockX(), vector.getBlockZ()).getY() + 2, vector.getBlockZ());
+            // player.sendBlockChange(loc, Material.RED_STAINED_GLASS.createBlockData());
             return true;
         }
 

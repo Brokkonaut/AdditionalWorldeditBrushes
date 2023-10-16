@@ -1,18 +1,20 @@
 package de.iani.additionalWorldeditBrushes;
 
-import java.util.ArrayList;
-import java.util.UUID;
-
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.command.tool.brush.Brush;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockTypes;
+import java.util.ArrayList;
+import java.util.UUID;
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Player;
+import org.bukkit.util.RayTraceResult;
 
 public class PullBrush implements Brush {
 
@@ -36,18 +38,17 @@ public class PullBrush implements Brush {
         double sizesq = size * size;
 
         // plugin.getLogger().info("Start brush");
-
         Player builder = plugin.getServer().getPlayer(playerId);
         if (builder == null) {
             return;
         }
-        // builder.sendMessage("Start");
-
         Location player = builder.getLocation();
 
         double dx = player.getX() - position.getX();
         double dy = player.getY() - position.getY();
         double dz = player.getZ() - position.getZ();
+
+        double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
         int mx = 0;
         int my = 0;
@@ -71,7 +72,23 @@ public class PullBrush implements Brush {
             }
         }
 
-        ArrayList<PostionedBlock> blocksToSet = new ArrayList<PostionedBlock>();
+        // use hit block face for direction if possible
+        Location bukkitPosition = BukkitAdapter.adapt(builder.getWorld(), position);
+        boolean liquid = bukkitPosition.getBlock().isLiquid();
+        RayTraceResult result = builder.rayTraceBlocks(d + 2, liquid ? FluidCollisionMode.ALWAYS : FluidCollisionMode.NEVER);
+        if (result != null && result.getHitBlock() != null) {
+            // builder.sendMessage("PullBrush location equals: " + result.getHitBlock().getLocation().equals(bukkitPosition));
+            BlockFace face = result.getHitBlockFace();
+            if (face != null) {
+                position = BukkitAdapter.asBlockVector(result.getHitBlock().getLocation());
+                mx = face.getModX();
+                my = face.getModY();
+                mz = face.getModZ();
+            }
+        }
+        // builder.sendMessage("Start");
+
+        ArrayList<PostionedBlock> blocksToSet = new ArrayList<>();
 
         for (int x = minx; x <= maxx; x++) {
             for (int y = miny; y <= maxy; y++) {

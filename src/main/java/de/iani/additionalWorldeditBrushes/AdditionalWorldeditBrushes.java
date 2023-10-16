@@ -12,6 +12,7 @@ import com.sk89q.worldedit.world.item.ItemTypes;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.ChatColor;
+import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -34,7 +35,7 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        ArrayList<String> rv = new ArrayList<String>();
+        ArrayList<String> rv = new ArrayList<>();
         if (args.length == 1) {
             String start = args[0].toLowerCase();
             if ("pull".startsWith(start)) {
@@ -51,6 +52,16 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
             }
             if ("snipe".startsWith(start)) {
                 rv.add("snipe");
+            }
+            if ("biome".startsWith(start)) {
+                rv.add("biome");
+            }
+        } else if (args.length == 2 && args[0].equals("biome")) {
+            String start = args[1].toUpperCase();
+            for (Biome biome : Biome.values()) {
+                if (biome != Biome.CUSTOM && biome.name().startsWith(start)) {
+                    rv.add(biome.name().toLowerCase());
+                }
             }
         }
         return rv;
