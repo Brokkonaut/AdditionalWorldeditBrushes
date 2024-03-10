@@ -28,12 +28,12 @@ public class PullBrush implements Brush {
 
     @Override
     public void build(EditSession editSession, BlockVector3 position, Pattern pattern, double size) throws MaxChangedBlocksException {
-        int minx = (int) (position.getX() - size);
-        int maxx = (int) (position.getX() + size);
-        int miny = (int) (position.getY() - size);
-        int maxy = (int) (position.getY() + size);
-        int minz = (int) (position.getZ() - size);
-        int maxz = (int) (position.getZ() + size);
+        int minx = (int) (position.x() - size);
+        int maxx = (int) (position.x() + size);
+        int miny = (int) (position.y() - size);
+        int maxy = (int) (position.y() + size);
+        int minz = (int) (position.z() - size);
+        int maxz = (int) (position.z() + size);
 
         double sizesq = size * size;
 
@@ -44,9 +44,9 @@ public class PullBrush implements Brush {
         }
         Location player = builder.getLocation();
 
-        double dx = player.getX() - position.getX();
-        double dy = player.getY() - position.getY();
-        double dz = player.getZ() - position.getZ();
+        double dx = player.getX() - position.x();
+        double dy = player.getY() - position.y();
+        double dz = player.getZ() - position.z();
 
         double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
@@ -93,7 +93,7 @@ public class PullBrush implements Brush {
         for (int x = minx; x <= maxx; x++) {
             for (int y = miny; y <= maxy; y++) {
                 for (int z = minz; z <= maxz; z++) {
-                    if (lengthSq(x - position.getX(), y - position.getY(), z - position.getZ()) < sizesq) {
+                    if (lengthSq(x - position.x(), y - position.y(), z - position.z()) < sizesq) {
                         BlockVector3 pos = BlockVector3.at(x, y, z);
                         BlockState blockHere = editSession.getBlock(pos);
                         if (blockHere.getBlockType() == BlockTypes.AIR) {

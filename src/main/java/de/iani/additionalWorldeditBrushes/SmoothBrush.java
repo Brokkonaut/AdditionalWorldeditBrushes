@@ -24,7 +24,7 @@ public class SmoothBrush implements Brush {
     }
 
     public boolean isAirlike(BlockType m) {
-        return m == BlockTypes.AIR || m == BlockTypes.CAVE_AIR || m == BlockTypes.WATER || m == BlockTypes.LAVA || m == BlockTypes.GRASS || !m.getMaterial().isMovementBlocker();
+        return m == BlockTypes.AIR || m == BlockTypes.CAVE_AIR || m == BlockTypes.WATER || m == BlockTypes.LAVA || m == BlockTypes.SHORT_GRASS || !m.getMaterial().isMovementBlocker();
     }
 
     public boolean isVeryAirlike(BlockType m) {
@@ -35,12 +35,12 @@ public class SmoothBrush implements Brush {
     public void build(EditSession editSession, BlockVector3 position, Pattern pattern, double size) throws MaxChangedBlocksException {
         int sizeInt = (int) size;
 
-        int minx = (position.getX()) - sizeInt;
-        int maxx = (position.getX()) + sizeInt;
-        int miny = (position.getY()) - sizeInt;
-        int maxy = (position.getY()) + sizeInt;
-        int minz = (position.getZ()) - sizeInt;
-        int maxz = (position.getZ()) + sizeInt;
+        int minx = (position.x()) - sizeInt;
+        int maxx = (position.x()) + sizeInt;
+        int miny = (position.y()) - sizeInt;
+        int maxy = (position.y()) + sizeInt;
+        int minz = (position.z()) - sizeInt;
+        int maxz = (position.z()) + sizeInt;
 
         double sizesq = size * size;
 
@@ -60,7 +60,7 @@ public class SmoothBrush implements Brush {
         for (int x = minx + 1; x <= maxx - 1; x++) {
             for (int y = miny + 1; y <= maxy - 1; y++) {
                 for (int z = minz + 1; z <= maxz - 1; z++) {
-                    if (lengthSq(x - position.getX(), y - position.getY(), z - position.getZ()) < sizesq) {
+                    if (lengthSq(x - position.x(), y - position.y(), z - position.z()) < sizesq) {
                         BlockVector3 pos = BlockVector3.at(x, y, z);
                         BlockState blockHere = blocks[x - minx][y - miny][z - minz];
 
@@ -88,7 +88,7 @@ public class SmoothBrush implements Brush {
 
                         for (BlockVector3 pos2 : neighbours) {
                             if (pos2 != null) {
-                                BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
+                                BlockState blockThere = blocks[pos2.x() - minx][pos2.y() - miny][pos2.z() - minz];
                                 if (isAirlike(blockThere.getBlockType())) {
                                     airCount++;
                                 }
@@ -100,7 +100,7 @@ public class SmoothBrush implements Brush {
                             blocksNeighbourData.clear();
                             for (BlockVector3 pos2 : neighbours) {
                                 if (pos2 != null) {
-                                    BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
+                                    BlockState blockThere = blocks[pos2.x() - minx][pos2.y() - miny][pos2.z() - minz];
                                     BlockType t = blockThere.getBlockType();
                                     if (!isAirlike(t)) {
                                         Integer existing = blocksNeighbour.get(t);
@@ -123,7 +123,7 @@ public class SmoothBrush implements Brush {
                             blocksNeighbourData.clear();
                             for (BlockVector3 pos2 : neighbours) {
                                 if (pos2 != null) {
-                                    BlockState blockThere = blocks[pos2.getBlockX() - minx][pos2.getBlockY() - miny][pos2.getBlockZ() - minz];
+                                    BlockState blockThere = blocks[pos2.x() - minx][pos2.y() - miny][pos2.z() - minz];
                                     BlockType t = blockThere.getBlockType();
                                     if (isVeryAirlike(t)) {
                                         Integer existing = blocksNeighbour.get(t);

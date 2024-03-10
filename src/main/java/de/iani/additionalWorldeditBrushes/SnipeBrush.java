@@ -1,19 +1,16 @@
 package de.iani.additionalWorldeditBrushes;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.command.tool.BrushTool;
 import com.sk89q.worldedit.command.tool.brush.Brush;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.math.BlockVector3;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 
 public class SnipeBrush implements Brush {
 
@@ -21,7 +18,7 @@ public class SnipeBrush implements Brush {
     private UUID playerId;
     // private BrushTool brushTool;
 
-    public SnipeBrush(AdditionalWorldeditBrushes plugin, UUID playerId, BrushTool brushTool) {
+    public SnipeBrush(AdditionalWorldeditBrushes plugin, UUID playerId) {
         this.plugin = plugin;
         this.playerId = playerId;
         // this.brushTool = brushTool;
@@ -37,8 +34,8 @@ public class SnipeBrush implements Brush {
         if (blocks.size() > 1) {
             Block lastAir = blocks.get(blocks.size() - 2);
             if (lastAir.getType() == Material.AIR) {
-                BlockVector3 position2 = BlockVector3.at(lastAir.getX(), lastAir.getY(), lastAir.getZ());
-                editSession.setBlock(position2, pattern.apply(position2));
+                BlockVector3 position3 = BlockVector3.at(lastAir.getX(), lastAir.getY(), lastAir.getZ());
+                editSession.setBlock(position3, pattern.applyBlock(position3));
             }
         }
         // BukkitPlayer wePlayer = plugin.getWorldEdit().wrapPlayer(builder);

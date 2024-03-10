@@ -17,6 +17,8 @@ import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.format.TextColor;
 import com.sk89q.worldedit.world.biome.BiomeType;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +107,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
                 oldBiome = editSession.getBiome(center);
             }
             if (oldBiome.equals(biome)) {
-                sender.sendMessage(ChatColor.DARK_RED + "Old biome and new biome are the same!");
+                wePlayer.print(TextComponent.of("Old biome and new biome are the same!").color(TextColor.DARK_RED));
                 return true;
             }
 
@@ -114,11 +116,11 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
             try {
                 Operations.completeLegacy(visitor);
             } catch (MaxChangedBlocksException e) {
-                wePlayer.print("Max blocks limit reached!");
+                wePlayer.print(TextComponent.of("Max blocks limit reached!").color(TextColor.LIGHT_PURPLE));
             } finally {
                 session.remember(editSession);
             }
-            wePlayer.print("Biomes were changed in " + visitor.getAffected() + " columns. You may have to rejoin your game (or close and reopen your world) to see a change.");
+            wePlayer.print(TextComponent.of("Biomes were changed in " + visitor.getAffected() + " columns. You may have to rejoin your game (or close and reopen your world) to see a change.").color(TextColor.LIGHT_PURPLE));
         }
         return true;
     }
@@ -140,7 +142,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
     }
 
     private class RadiusMask implements Mask {
-        private Player player;
+        // private Player player;
         private Extent extent;
         private BlockVector2 center;
         private int radius;
@@ -150,7 +152,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         private double add3;
 
         public RadiusMask(Player player, Extent extent, BlockVector3 center, int radius, BiomeType expectedBiome) {
-            this.player = player;
+            // this.player = player;
             this.extent = extent;
             this.center = center.toBlockVector2();
             this.radius = radius;
@@ -169,7 +171,7 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
             }
             BlockVector2 relative = vector.toBlockVector2().subtract(center);
             double d = relative.length();
-            double atan = Math.atan2(relative.getZ(), relative.getX());// -pi ... pi
+            double atan = Math.atan2(relative.z(), relative.x());// -pi ... pi
             double maxd = 1;
             maxd += Math.sin(atan * 2 + add1) * 0.1;// Magic value!
             maxd += Math.sin((atan * 5) + add2) * 0.07;// Magic value!

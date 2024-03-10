@@ -8,6 +8,9 @@ import com.sk89q.worldedit.extension.input.InputParseException;
 import com.sk89q.worldedit.extension.input.ParserContext;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.util.HandSide;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.format.TextColor;
+import com.sk89q.worldedit.world.item.ItemType;
 import com.sk89q.worldedit.world.item.ItemTypes;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,32 +109,30 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
 
         Player player = (Player) sender;
         BukkitPlayer wePlayer = we.wrapPlayer(player);
-        if (wePlayer.getItemInHand(HandSide.MAIN_HAND) == null || wePlayer.getItemInHand(HandSide.MAIN_HAND).getType() == ItemTypes.AIR) {
+        ItemType inHand;
+        if (wePlayer.getItemInHand(HandSide.MAIN_HAND) == null || (inHand = wePlayer.getItemInHand(HandSide.MAIN_HAND).getType()) == ItemTypes.AIR) {
             sender.sendMessage(ChatColor.DARK_RED + "You have no item in your hand");
             return true;
         }
         try {
             if (type.equalsIgnoreCase("pull")) {
-                BrushTool tool = we.getSession(player).getBrushTool(wePlayer.getItemInHand(HandSide.MAIN_HAND).getType());
-                tool.setBrush(new PullBrush(this, player.getUniqueId()), "additionalWorldEditBrushes.use");
+                BrushTool tool = we.getSession(player).forceBrush(inHand, new PullBrush(this, player.getUniqueId()), "additionalWorldEditBrushes.use");
                 tool.setSize(radius);
-                wePlayer.print(String.format("Pull brush equipped (Radius %1$.0f).", radius));
+                wePlayer.print(TextComponent.of(String.format("Pull brush equipped (Radius %1$.0f).", radius)).color(TextColor.LIGHT_PURPLE));
             } else if (type.equalsIgnoreCase("push")) {
-                BrushTool tool = we.getSession(player).getBrushTool(wePlayer.getItemInHand(HandSide.MAIN_HAND).getType());
-                tool.setBrush(new PushBrush(this, player.getUniqueId()), "additionalWorldEditBrushes.use");
+                BrushTool tool = we.getSession(player).forceBrush(inHand, new PushBrush(this, player.getUniqueId()), "additionalWorldEditBrushes.use");
                 tool.setSize(radius);
-                wePlayer.print(String.format("Push brush equipped (Radius %1$.0f).", radius));
+                wePlayer.print(TextComponent.of(String.format("Push brush equipped (Radius %1$.0f).", radius)).color(TextColor.LIGHT_PURPLE));
             } else if (type.equalsIgnoreCase("smooth")) {
                 int bias = args.getNext(0);
                 bias = Math.max(Math.min(bias, 8), -8);
-                BrushTool tool = we.getSession(player).getBrushTool(wePlayer.getItemInHand(HandSide.MAIN_HAND).getType());
-                tool.setBrush(new SmoothBrush(this, bias), "additionalWorldEditBrushes.use");
+                BrushTool tool = we.getSession(player).forceBrush(inHand, new SmoothBrush(this, bias), "additionalWorldEditBrushes.use");
                 tool.setSize(radius);
-                wePlayer.print(String.format("Smooth brush equipped (Radius %1$.0f, Bias %2$d).", radius, bias));
+                wePlayer.print(TextComponent.of(String.format("Smooth brush equipped (Radius %1$.0f, Bias %2$d).", radius, bias)).color(TextColor.LIGHT_PURPLE));
             } else if (type.equalsIgnoreCase("snipe")) {
                 String patternString = args.getNext(null);
                 if (patternString == null) {
-                    sender.sendMessage(ChatColor.DARK_RED + "Missing pattern");
+                    wePlayer.print(TextComponent.of("Missing pattern").color(TextColor.DARK_RED));
                     sender.sendMessage("/abrush snipe <pattern>");
                     return true;
                 }
@@ -143,15 +144,14 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
                 try {
                     pattern = we.getWorldEdit().getPatternFactory().parseFromInput(patternString, context);
                 } catch (InputParseException e) {
-                    sender.sendMessage(ChatColor.DARK_RED + "Could not parse pattern: " + e.getLocalizedMessage());
+                    wePlayer.print(TextComponent.of("Could not parse pattern: " + e.getLocalizedMessage()).color(TextColor.DARK_RED));
                     sender.sendMessage("/abrush snipe <pattern>");
                     return true;
                 }
-                BrushTool tool = we.getSession(player).getBrushTool(wePlayer.getItemInHand(HandSide.MAIN_HAND).getType());
-                tool.setBrush(new SnipeBrush(this, player.getUniqueId(), tool), "additionalWorldEditBrushes.use");
+                BrushTool tool = we.getSession(player).forceBrush(inHand, new SnipeBrush(this, player.getUniqueId()), "additionalWorldEditBrushes.use");
                 tool.setSize(1);
                 tool.setFill(pattern);
-                wePlayer.print(String.format("Snipe brush equipped."));
+                wePlayer.print(TextComponent.of("Snipe brush equipped.").color(TextColor.LIGHT_PURPLE));
             } else {
                 sender.sendMessage("Invalid brush");
             }

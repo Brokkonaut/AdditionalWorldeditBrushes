@@ -1,11 +1,5 @@
 package de.iani.additionalWorldeditBrushes;
 
-import java.util.ArrayList;
-import java.util.UUID;
-
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.command.tool.brush.Brush;
@@ -13,6 +7,10 @@ import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockTypes;
+import java.util.ArrayList;
+import java.util.UUID;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 public class PushBrush implements Brush {
 
@@ -26,12 +24,12 @@ public class PushBrush implements Brush {
 
     @Override
     public void build(EditSession editSession, BlockVector3 position, Pattern pattern, double size) throws MaxChangedBlocksException {
-        int minx = (int) (position.getX() - size);
-        int maxx = (int) (position.getX() + size);
-        int miny = (int) (position.getY() - size);
-        int maxy = (int) (position.getY() + size);
-        int minz = (int) (position.getZ() - size);
-        int maxz = (int) (position.getZ() + size);
+        int minx = (int) (position.x() - size);
+        int maxx = (int) (position.x() + size);
+        int miny = (int) (position.y() - size);
+        int maxy = (int) (position.y() + size);
+        int minz = (int) (position.z() - size);
+        int maxz = (int) (position.z() + size);
 
         double sizesq = size * size;
 
@@ -45,9 +43,9 @@ public class PushBrush implements Brush {
 
         Location player = builder.getLocation();
 
-        double dx = player.getX() - position.getX();
-        double dy = player.getY() - position.getY();
-        double dz = player.getZ() - position.getZ();
+        double dx = player.getX() - position.x();
+        double dy = player.getY() - position.y();
+        double dz = player.getZ() - position.z();
 
         int mx = 0;
         int my = 0;
@@ -71,12 +69,12 @@ public class PushBrush implements Brush {
             }
         }
 
-        ArrayList<PostionedBlock> blocksToSet = new ArrayList<PostionedBlock>();
+        ArrayList<PostionedBlock> blocksToSet = new ArrayList<>();
 
         for (int x = minx; x <= maxx; x++) {
             for (int y = miny; y <= maxy; y++) {
                 for (int z = minz; z <= maxz; z++) {
-                    if (lengthSq(x - position.getX(), y - position.getY(), z - position.getZ()) < sizesq) {
+                    if (lengthSq(x - position.x(), y - position.y(), z - position.z()) < sizesq) {
                         BlockVector3 pos = BlockVector3.at(x, y, z);
                         BlockState blockHere = editSession.getBlock(pos);
                         // builder.sendMessage("A: " + pos + ": " + blockHere);
