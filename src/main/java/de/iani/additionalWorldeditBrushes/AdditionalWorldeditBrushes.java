@@ -14,8 +14,8 @@ import com.sk89q.worldedit.world.item.ItemType;
 import com.sk89q.worldedit.world.item.ItemTypes;
 import java.util.ArrayList;
 import java.util.List;
-import org.bukkit.ChatColor;
-import org.bukkit.block.Biome;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -44,9 +44,6 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
             if ("pull".startsWith(start)) {
                 rv.add("pull");
             }
-            if ("pull".startsWith(start)) {
-                rv.add("pull");
-            }
             if ("push".startsWith(start)) {
                 rv.add("push");
             }
@@ -56,16 +53,6 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
             if ("snipe".startsWith(start)) {
                 rv.add("snipe");
             }
-            if ("biome".startsWith(start)) {
-                rv.add("biome");
-            }
-        } else if (args.length == 2 && args[0].equals("biome")) {
-            String start = args[1].toUpperCase();
-            for (Biome biome : Biome.values()) {
-                if (biome != Biome.CUSTOM && biome.name().startsWith(start)) {
-                    rv.add(biome.name().toLowerCase());
-                }
-            }
         }
         return rv;
     }
@@ -73,11 +60,11 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] argsa) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.DARK_RED + "Only for players");
+            sender.sendMessage(Component.text("Only for players", NamedTextColor.DARK_RED));
             return true;
         }
         if (!sender.hasPermission("additionalWorldEditBrushes.use")) {
-            sender.sendMessage(ChatColor.DARK_RED + "Not allowed!");
+            sender.sendMessage(Component.text("Not allowed!", NamedTextColor.DARK_RED));
             return true;
         }
 
@@ -98,11 +85,11 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
                 radius = args.getNext(-1.0);
             }
             if (radius < 1) {
-                sender.sendMessage(ChatColor.DARK_RED + "Invalid radius");
+                sender.sendMessage(Component.text("Invalid radius", NamedTextColor.DARK_RED));
                 return true;
             }
             if (radius > maxRadius) {
-                sender.sendMessage(ChatColor.DARK_RED + "Max radius = " + maxRadius);
+                sender.sendMessage(Component.text("Max radius = " + maxRadius, NamedTextColor.DARK_RED));
                 radius = maxRadius;
             }
         }
@@ -111,7 +98,7 @@ public class AdditionalWorldeditBrushes extends JavaPlugin {
         BukkitPlayer wePlayer = we.wrapPlayer(player);
         ItemType inHand;
         if (wePlayer.getItemInHand(HandSide.MAIN_HAND) == null || (inHand = wePlayer.getItemInHand(HandSide.MAIN_HAND).getType()) == ItemTypes.AIR) {
-            sender.sendMessage(ChatColor.DARK_RED + "You have no item in your hand");
+            sender.sendMessage(Component.text("You have no item in your hand", NamedTextColor.DARK_RED));
             return true;
         }
         try {

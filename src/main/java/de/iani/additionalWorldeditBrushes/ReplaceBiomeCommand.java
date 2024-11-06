@@ -20,10 +20,14 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.format.TextColor;
 import com.sk89q.worldedit.world.biome.BiomeType;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -42,11 +46,11 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.DARK_RED + "Only for players!");
+            sender.sendMessage(Component.text("Only for players!", NamedTextColor.DARK_RED));
             return true;
         }
         if (!sender.hasPermission("additionalWorldEditBrushes.replacebiome")) {
-            sender.sendMessage(ChatColor.DARK_RED + "No permission!");
+            sender.sendMessage(Component.text("No permission!", NamedTextColor.DARK_RED));
             return true;
         }
         Player player = (Player) sender;
@@ -57,13 +61,14 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         }
         BiomeType biome = null;
         try {
-            Biome bukkitBiome = Biome.valueOf(args[0].toUpperCase());
-            biome = bukkitBiome == Biome.CUSTOM ? null : BukkitAdapter.adapt(bukkitBiome);
+            NamespacedKey key = NamespacedKey.fromString(args[0].toLowerCase());
+            Biome bukkitBiome = key == null ? null : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME).get(key);
+            biome = bukkitBiome == null ? null : BukkitAdapter.adapt(bukkitBiome);
         } catch (IllegalArgumentException e) {
             // ignore
         }
         if (biome == null) {
-            sender.sendMessage(ChatColor.DARK_RED + "Unknown Biome!");
+            sender.sendMessage(Component.text("Unknown Biome!", NamedTextColor.DARK_RED));
             return true;
         }
         int radius = -1;
@@ -72,20 +77,21 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
         } catch (IllegalArgumentException e) {
         }
         if (radius < 1 || radius > 60) {
-            sender.sendMessage(ChatColor.DARK_RED + "Invalid radius (1..60)!");
+            sender.sendMessage(Component.text("Invalid radius (1..60)!", NamedTextColor.DARK_RED));
             return true;
         }
         int expandedRadius = (int) ((radius + 1) * 1.3);
         BiomeType oldBiome = null;
         if (args.length >= 3) {
             try {
-                Biome bukkitBiome = Biome.valueOf(args[2].toUpperCase());
-                oldBiome = bukkitBiome == Biome.CUSTOM ? null : BukkitAdapter.adapt(bukkitBiome);
+                NamespacedKey key = NamespacedKey.fromString(args[2].toLowerCase());
+                Biome bukkitBiome = key == null ? null : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME).get(key);
+                oldBiome = bukkitBiome == null ? null : BukkitAdapter.adapt(bukkitBiome);
             } catch (IllegalArgumentException e) {
                 // ignore
             }
             if (oldBiome == null) {
-                sender.sendMessage(ChatColor.DARK_RED + "Unknown old Biome!");
+                sender.sendMessage(Component.text("Unknown old Biome!", NamedTextColor.DARK_RED));
                 return true;
             }
         }
@@ -128,13 +134,11 @@ public class ReplaceBiomeCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         ArrayList<String> result = new ArrayList<>();
-        String last = args.length == 0 ? "" : args[args.length - 1];
+        String last = args.length == 0 ? "" : args[args.length - 1].toLowerCase();
         if (args.length == 1 || args.length == 3) {
-            for (Biome s : Biome.values()) {
-                if (s != Biome.CUSTOM) {
-                    if (s.name().toLowerCase().startsWith(last.toLowerCase())) {
-                        result.add(s.name());
-                    }
+            for (Biome s : RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME)) {
+                if (s.getKey().asMinimalString().startsWith(last) || s.getKey().asString().startsWith(last)) {
+                    result.add(s.getKey().asMinimalString());
                 }
             }
         }
